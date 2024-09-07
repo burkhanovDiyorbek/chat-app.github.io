@@ -15,7 +15,7 @@ export default function ChatText({ message, time, isReceived }: IChatProps) {
 
         <div className="text-xs text-gray-500 mt-1 flex items-center">
           {time}
-          {!isReceived && <span className="ml-1 text-green-500">✓</span>}
+          {/* {!isReceived && <span className="ml-1 text-green-500">✓</span>} */}
         </div>
       </div>
     </div>

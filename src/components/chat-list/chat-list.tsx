@@ -1,35 +1,38 @@
 import ChatListItem from '../chat-list-item/chat-list-item';
-export default function ChatList() {
-  const data = [
-    {
-      id: 1,
-      name: 'Greg James',
-      avatar: 'https://via.placeholder.com/40',
-      online: true,
-    },
-    {
-      id: 2,
-      name: 'Greg James',
-      avatar: 'https://via.placeholder.com/40',
-      online: true,
-    },
-    {
-      id: 3,
-      name: 'Greg James',
-      avatar: 'https://via.placeholder.com/40',
-      online: true,
-    },
-    {
-      id: 4,
-      name: 'Greg James',
-      avatar: 'https://via.placeholder.com/40',
-      online: true,
-    },
-  ];
+import { createOrGetChat } from '../../firebase/services';
+
+interface ChatListProps {
+  friends: { uid: string; name: string; avatar: string }[];
+  currentUserId: string;
+  onSelectChat: (chatId: string) => void;
+}
+
+export default function ChatList({ friends, currentUserId, onSelectChat }: ChatListProps) {
+  const handleChatClick = async (friendId: string) => {
+    console.log('handleChatClick', friendId);
+
+    try {
+      const chatId = await createOrGetChat(currentUserId, friendId);
+      console.log('chatId', chatId);
+
+      onSelectChat(chatId);
+    } catch (error) {
+      console.error('Error while selecting chat:', error);
+    }
+  };
+
   return (
-    <div>
-      {data.map((item) => (
-        <ChatListItem key={item.id} {...item} />
+    <div className="chat-list">
+      {friends?.map((friend) => (
+        <div
+          key={friend.uid}
+          className="chat-item bg-red-600 cursor-pointer"
+          onClick={() => {
+            console.log('Clicked on:', friend.uid); // Test xabari qo'shing
+            handleChatClick(friend.uid);
+          }}>   
+          <ChatListItem avatar={friend.avatar} name={friend.name} />
+        </div>
       ))}
     </div>
   );
