@@ -1,15 +1,19 @@
-import ChatList from './components/chat-list/chat-list';
-import Search from './components/search/search';
-import Chat from './components/chat/chat';
+import Register from './pages/Register';
+import PrivateRoute from './components/routes/PrivateRoute';
+import Layout from './Layout/Layout';
+import ChatPage from './pages/ChatPage';
+import { Route, Routes } from 'react-router-dom';
 export default function App() {
   return (
-    <div className="flex">
-      <div className="flex flex-col border-r-2 border-gray-300 h-screen w-full max-w-[364px] p-3">
-        <Search />
-        <ChatList />
-        <ChatList />
-      </div>
-      <Chat />
-    </div>
+    <>
+      <Routes>
+        <Route path="/" element={<PrivateRoute />}>
+          <Route path="/uid/:uid" element={<Layout />}>
+            <Route path="/uid/:uid" element={<ChatPage />} />
+          </Route>
+        </Route>
+        <Route path="/register" element={<Register />} />
+      </Routes>
+    </>
   );
 }

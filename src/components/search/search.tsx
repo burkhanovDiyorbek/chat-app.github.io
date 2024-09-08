@@ -1,4 +1,27 @@
-export default function Search() {
+import React, { useState, useCallback } from 'react';
+
+interface SearchProps {
+  onSearch: (query: string) => void;
+  onFocus: () => void;
+  onBlur: () => void;
+}
+
+export default function Search({ onSearch, onFocus, onBlur }: SearchProps) {
+  const [query, setQuery] = useState<string>('');
+
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      onSearch(value);
+    }, 300),
+    [],
+  );
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setQuery(value);
+    debouncedSearch(value);
+  };
+
   return (
     <div className="flex items-center mb-5 w-full bg-gray-100 rounded-full p-2 max-w-sm mx-auto shadow-md">
       <svg
@@ -18,8 +41,24 @@ export default function Search() {
       <input
         type="text"
         placeholder="Search"
+        value={query}
+        onChange={handleChange}
+        onFocus={onFocus}
+        onBlur={onBlur}
         className="bg-gray-100 outline-none ml-3 text-gray-500 placeholder-gray-500 flex-grow"
       />
     </div>
   );
+}
+
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number,
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
 }
