@@ -9,8 +9,11 @@ export default function Register() {
     mutationFn: signInWithGoogle,
     mutationKey: ['signInWithGoogle'],
     onSuccess: (data) => {
-      navigate('/uid/' + data.user.uid);
-      localStorage.setItem('uuid', data.user.access_token);
+      // `token`ni to'g'ri olish va saqlash
+      data.user.getIdToken().then((token: string) => {
+        localStorage.setItem('token', token);
+        navigate('/uid/' + data.user.uid);
+      });
     },
   });
 
