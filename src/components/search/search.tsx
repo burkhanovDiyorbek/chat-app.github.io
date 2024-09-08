@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useCallback } from "react";
 
 interface SearchProps {
   onSearch: (query: string) => void;
@@ -7,13 +8,13 @@ interface SearchProps {
 }
 
 export default function Search({ onSearch, onFocus, onBlur }: SearchProps) {
-  const [query, setQuery] = useState<string>('');
+  const [query, setQuery] = useState<string>("");
 
   const debouncedSearch = useCallback(
     debounce((value: string) => {
       onSearch(value);
     }, 300),
-    [],
+    []
   );
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,7 +31,8 @@ export default function Search({ onSearch, onFocus, onBlur }: SearchProps) {
         viewBox="0 0 24 24"
         strokeWidth={1.5}
         stroke="currentColor"
-        className="size-6 text-[#707991]">
+        className="size-6 text-[#707991]"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -53,7 +55,7 @@ export default function Search({ onSearch, onFocus, onBlur }: SearchProps) {
 
 function debounce<T extends (...args: any[]) => void>(
   func: T,
-  wait: number,
+  wait: number
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout;
 

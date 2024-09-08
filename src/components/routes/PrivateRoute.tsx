@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { checkAuth } from "../../firebase/services";
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+// import { checkAuth } from "../../firebase/services";
+// import { useEffect, useState } from "react";
+// import { useQuery } from "@tanstack/react-query";
 export default function PrivateRoute() {
   //   const [accepted, setAccepted] = useState(false);
   //   let token: string | null = localStorage.getItem('uuid');
@@ -9,8 +9,8 @@ export default function PrivateRoute() {
   //   useEffect(() => {}, [token]);
 
   //   console.log(accepted);
-
-  return true ? <Outlet /> : <Navigate to="/register" />;
+  const bool = true;
+  return bool ? <Outlet /> : <Navigate to="/register" />;
 }
 
 // 1. frineds list shuni chiqarish kerak
