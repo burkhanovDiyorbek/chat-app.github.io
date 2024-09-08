@@ -1,16 +1,28 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { checkAuth } from '../../firebase/services';
-import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+
 export default function PrivateRoute() {
-  //   const [accepted, setAccepted] = useState(false);
-  //   let token: string | null = localStorage.getItem('uuid');
-  //   const { isPending, error, data } = useQuery();
-  //   useEffect(() => {}, [token]);
+  const {
+    isLoading,
+    error,
+    data: isAuthenticated,
+  } = useQuery({
+    queryKey: ['isAuthenticated'],
+    queryFn: checkAuth,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
 
-  //   console.log(accepted);
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-  return true ? <Outlet /> : <Navigate to="/register" />;
+  if (error) {
+    return <div>Error occurred: {error.message}</div>;
+  }
+
+  return isAuthenticated ? <Outlet /> : <Navigate to="/register" />;
 }
 
 // 1. frineds list shuni chiqarish kerak
