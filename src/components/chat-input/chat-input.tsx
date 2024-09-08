@@ -1,25 +1,37 @@
-export default function ChatInput() {
+import { useState } from 'react';
+
+interface ChatInputProps {
+  onSendMessage: (message: string) => void;
+}
+
+export default function ChatInput({ onSendMessage }: ChatInputProps) {
+  const [message, setMessage] = useState('');
+
+  const handleSend = () => {
+    if (message.trim() !== '') {
+      onSendMessage(message);
+      setMessage(''); // Xabar yuborilgandan keyin inputni tozalash
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSend();
+    }
+  };
+
   return (
-    <div className="flex w-full items-center bg-white rounded-full p-2 shadow-md">
+    <div className="flex p-3 border-t">
       <input
         type="text"
-        placeholder="Message"
-        className="flex-grow p-2 rounded-full outline-none text-gray-600"
+        placeholder="Type your message..."
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        onKeyDown={handleKeyDown}
+        className="flex-grow border p-2 rounded"
       />
-      <button className="bg-transparent flex items-center justify-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          className="w-6 h-6 text-blue-500">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M14 5l7 7m0 0l-7 7m7-7H3"
-          />
-        </svg>
+      <button onClick={handleSend} className="ml-2 px-4 py-2 bg-blue-500 text-white rounded">
+        Send
       </button>
     </div>
   );

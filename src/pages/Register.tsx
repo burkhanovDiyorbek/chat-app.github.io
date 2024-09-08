@@ -10,7 +10,7 @@ export default function Register() {
     mutationKey: ['signInWithGoogle'],
     onSuccess: (data) => {
       navigate('/uid/' + data.user.uid);
-      localStorage.setItem('uuid', data.user.uid);
+      localStorage.setItem('uuid', data.user.access_token);
     },
   });
 
