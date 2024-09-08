@@ -1,10 +1,9 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import ChatList from '../components/chat-list/chat-list';
 import Search from '../components/search/search';
-import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getFriendsData, getUsersByQuery, getUserData } from '../firebase/services';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface UserData {
   id: string;
@@ -27,20 +26,37 @@ export default function Layout() {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedChatId, setSelectedChatId] = useState<string>('');
-
-  const { data: userData, error: userError } = useQuery<UserData>({
+  useEffect(() => {
+    if (isSuccess) {
+      setFriends(friends);
+    }
+  });
+  const { data: userData, error: userError } = useQuery<UserData | undefined>({
     queryKey: ['userData', uid],
-    queryFn: () => getUserData(uid),
+    queryFn: async () => {
+      const user = await getUserData(uid);
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        friends: user.friends,
+      } as UserData;
+    },
     enabled: !!uid,
   });
 
-  const { data: friendsData, error: friendsError } = useQuery<FriendData[]>({
+  // Friend data query
+  const { error: friendsError, isSuccess } = useQuery<FriendData[]>({
     queryKey: ['friendsData', userData?.friends],
-    queryFn: () => getFriendsData(userData?.friends || [], setFriends),
-    enabled: !!userData?.friends && userData?.friends.length > 0 && !isSearching,
-    onSuccess: (data) => {
-      if (data) setFriends(data);
+    queryFn: async () => {
+      if (!userData?.friends || userData.friends.length === 0) {
+        return [];
+      }
+      return new Promise<FriendData[]>((resolve) => {
+        getFriendsData(userData.friends!, (data) => resolve(data));
+      });
     },
+    enabled: !!userData?.friends && userData.friends.length > 0 && !isSearching,
   });
 
   const { data: searchData, error: searchError } = useQuery<FriendData[]>({
@@ -68,14 +84,14 @@ export default function Layout() {
   return (
     <div className="flex">
       <div className="flex flex-col border-r-2 border-gray-300 h-screen w-full max-w-[364px] p-3">
-        <Search onSearch={handleSearch} />
+        <Search onSearch={handleSearch} onFocus={() => {}} onBlur={() => {}} />
         <ChatList
-          friends={displayedFriends || []}
+          friends={displayedFriends as any}
           currentUserId={uid as string}
           onSelectChat={handleSelectChat}
         />
       </div>
-      {selectedChatId ? <div>{/* Sizning tanlangan chat yoki xabarlar UI */}</div> : null}
+      {selectedChatId ? <div>{/* Your chat or messages UI for selectedChatId */}</div> : null}
       <Outlet />
     </div>
   );

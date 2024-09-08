@@ -5,8 +5,7 @@ interface ChatTextProps {
   isReceived: boolean;
 }
 
-export default function ChatText({ message, sender, time, isReceived }: ChatTextProps) {
-  // `sender` qiymati bo'yicha joylashuv va ranglarni o'zgartirish
+export default function ChatText({ message, sender, time }: ChatTextProps) {
   const containerStyle =
     sender === 'me'
       ? 'ml-auto bg-green-500 text-white' // Mening xabarlarim yashil fonda, o'ngda

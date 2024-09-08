@@ -1,4 +1,4 @@
-import { firestore, auth, provider } from './config';
+import { firestore, provider } from './config';
 import {
   addDoc,
   collection,
@@ -15,16 +15,28 @@ import {
 import { signInWithPopup, onAuthStateChanged, getAuth } from 'firebase/auth';
 
 interface IUser {
-  uid: string | null;
+  id: string;
+  uid: string;
   username: string | null;
   online: boolean | null;
-  email: string | null;
+  email: string;
   avatar: string | null;
-  name: string | null;
-  friends: string[] | null;
+  name: string;
+  friends: string[];
 }
 
-export const addMessage = async (chatId: string, message: any) => {
+interface FriendData {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+}
+
+// Xabar qo'shish funksiyasi
+export const addMessage = async (
+  chatId: string,
+  message: { senderId: string; content: string; timestamp: string },
+) => {
   if (!chatId) {
     console.error('Invalid chat ID for adding message');
     return;
@@ -52,6 +64,7 @@ export const getMessages = (chatId: string, callback: (messages: any[]) => void)
   return unsubscribe;
 };
 
+// Foydalanuvchini Firestore kollektsiyasiga qo'shish
 export const setUserToCollection = async (user: IUser) => {
   try {
     await addDoc(collection(firestore, 'users'), user);
@@ -60,14 +73,18 @@ export const setUserToCollection = async (user: IUser) => {
   }
 };
 
-export const getUsersByQuery = async (searchTerm: string): Promise<any[]> => {
+// Qidiruv so'rovi orqali foydalanuvchilarni olish
+export const getUsersByQuery = async (searchTerm: string): Promise<FriendData[]> => {
   if (!searchTerm) return [];
   const usersRef = collection(firestore, 'users');
   const q = query(usersRef);
 
   try {
     const querySnapshot = await getDocs(q);
-    const allUsers = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const allUsers = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as FriendData[];
     return allUsers.filter((user) => user.name.toLowerCase().includes(searchTerm.toLowerCase()));
   } catch (error) {
     console.error('Error fetching users by query:', error);
@@ -75,7 +92,8 @@ export const getUsersByQuery = async (searchTerm: string): Promise<any[]> => {
   }
 };
 
-export const getFriendsData = (friends: string[], callback: (users: any[]) => void) => {
+// Do'stlarning ma'lumotlarini olish
+export const getFriendsData = (friends: string[], callback: (users: FriendData[]) => void) => {
   if (friends.length === 0) {
     callback([]);
     return;
@@ -86,7 +104,10 @@ export const getFriendsData = (friends: string[], callback: (users: any[]) => vo
 
   try {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const users = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const users = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as FriendData[];
       callback(users);
     });
 
@@ -97,13 +118,15 @@ export const getFriendsData = (friends: string[], callback: (users: any[]) => vo
   }
 };
 
-const checkUserExists = async (email: string | null) => {
+// Foydalanuvchi mavjudligini tekshirish
+const checkUserExists = async (email: string): Promise<boolean> => {
   const usersRef = collection(firestore, 'users');
   const q = query(usersRef, where('email', '==', email));
   const querySnapshot = await getDocs(q);
   return querySnapshot.size > 0;
 };
 
+// Google orqali kirish
 export const signInWithGoogle = async () => {
   try {
     const auth = getAuth();
@@ -115,11 +138,12 @@ export const signInWithGoogle = async () => {
     const userData: IUser = {
       uid: user.uid,
       online: true,
-      email: user.email,
-      name: user.displayName,
+      email: user.email as string,
+      name: user.displayName as string,
       username: user.uid,
       avatar: user.photoURL,
       friends: [],
+      id: '',
     };
 
     if (!(await checkUserExists(userData.email))) {
@@ -133,7 +157,8 @@ export const signInWithGoogle = async () => {
   }
 };
 
-export const checkAuth = async () => {
+// Autentifikatsiyani tekshirish
+export const checkAuth = async (): Promise<boolean> => {
   const auth = getAuth();
 
   return new Promise((resolve) => {
@@ -143,7 +168,8 @@ export const checkAuth = async () => {
   });
 };
 
-export const getUserData = async (uid: string | null | undefined) => {
+// Foydalanuvchi ma'lumotlarini olish
+export const getUserData = async (uid: string | null | undefined): Promise<IUser> => {
   if (!uid) throw new Error('User ID is not provided.');
 
   try {
@@ -157,18 +183,36 @@ export const getUserData = async (uid: string | null | undefined) => {
     }
 
     const userDoc = querySnapshot.docs[0];
-    return { id: userDoc.id, ...userDoc.data() };
+    const userData = userDoc.data();
+
+    if (!userData) {
+      throw new Error('User data not found.');
+    }
+
+    // `IUser` interfeysiga mos keladigan obyekt yaratish
+    return {
+      id: userDoc.id,
+      name: userData.name,
+      email: userData.email,
+      friends: userData.friends || [],
+      uid: userData.uid,
+      username: userData.username,
+      online: userData.online,
+      avatar: userData.avatar,
+    } as IUser;
   } catch (error) {
     console.error('Error fetching user data:', error);
     throw error;
   }
 };
 
+// Chat ID yaratish
 const createChatId = (userId1: string, userId2: string): string => {
   return [userId1, userId2].sort().join('_');
 };
 
-export const createOrGetChat = async (userId1: string, userId2: string) => {
+// Chatni yaratish yoki olish
+export const createOrGetChat = async (userId1: string, userId2: string): Promise<string> => {
   const chatId = createChatId(userId1, userId2);
   const chatRef = doc(firestore, 'chats', chatId);
 
