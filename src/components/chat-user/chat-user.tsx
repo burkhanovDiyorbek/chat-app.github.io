@@ -1,20 +1,13 @@
-export default function ChatUser() {
-  return (
-    <div className="w-full flex items-center p-2 shadow-sm bg-white">
-      <img
-        src="https://via.placeholder.com/40"
-        alt={`${name}'s avatar`}
-        className="w-10 h-10 rounded-full"
-      />
+interface ChatUserProps {
+  name: string;
+  avatar: string;
+}
 
-      <div className="ml-3">
-        <h4 className="text-lg font-semibold text-gray-800">{'Shohjahon Ergashev'}</h4>
-        <div className="text-sm text-gray-500">
-          {/* {status ? 'online' : 'offline'} <span className="text-gray-300">|</span>{' '}
-          {status ? 'offline' : 'online'} */}
-          online
-        </div>
-      </div>
+export default function ChatUser({ name, avatar }: ChatUserProps) {
+  return (
+    <div className="flex items-center p-3 border-b">
+      <img src={avatar} alt={name} className="w-10 h-10 rounded-full mr-3" />
+      <span className="font-bold">{name}</span>
     </div>
   );
 }

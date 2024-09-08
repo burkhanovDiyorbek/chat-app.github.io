@@ -9,10 +9,10 @@ import {
   getDoc,
   doc,
   serverTimestamp,
-  updateDoc,
   setDoc,
+  orderBy,
 } from 'firebase/firestore';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, onAuthStateChanged, getAuth } from 'firebase/auth';
 
 interface IUser {
   uid: string | null;
@@ -23,6 +23,34 @@ interface IUser {
   name: string | null;
   friends: string[] | null;
 }
+
+export const addMessage = async (chatId: string, message: any) => {
+  if (!chatId) {
+    console.error('Invalid chat ID for adding message');
+    return;
+  }
+
+  const chatRef = collection(firestore, 'chats', chatId, 'messages');
+  await addDoc(chatRef, message);
+};
+
+// Xabarlarni jonli kuzatish funksiyasi (snapshot)
+export const getMessages = (chatId: string, callback: (messages: any[]) => void) => {
+  if (!chatId) {
+    console.error('Invalid chat ID for getting messages');
+    return;
+  }
+
+  const chatRef = collection(firestore, 'chats', chatId, 'messages');
+  const q = query(chatRef, orderBy('timestamp'));
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const messages = snapshot.docs.map((doc) => doc.data());
+    callback(messages);
+  });
+
+  return unsubscribe;
+};
 
 export const setUserToCollection = async (user: IUser) => {
   try {
@@ -35,15 +63,12 @@ export const setUserToCollection = async (user: IUser) => {
 export const getUsersByQuery = async (searchTerm: string): Promise<any[]> => {
   if (!searchTerm) return [];
   const usersRef = collection(firestore, 'users');
-  const q = query(
-    usersRef,
-    where('name', '>=', searchTerm),
-    where('name', '<=', searchTerm + '\uf8ff'),
-  );
+  const q = query(usersRef);
 
   try {
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const allUsers = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return allUsers.filter((user) => user.name.toLowerCase().includes(searchTerm.toLowerCase()));
   } catch (error) {
     console.error('Error fetching users by query:', error);
     throw error;
@@ -81,18 +106,23 @@ const checkUserExists = async (email: string | null) => {
 
 export const signInWithGoogle = async () => {
   try {
+    const auth = getAuth();
     const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    const token = await user.getIdToken();
+    localStorage.setItem('token', token);
+
     const userData: IUser = {
-      uid: result.user.uid,
-      online: null,
-      email: result.user.email,
-      name: result.user.displayName,
-      username: result.user.uid,
-      avatar: result.user.photoURL,
+      uid: user.uid,
+      online: true,
+      email: user.email,
+      name: user.displayName,
+      username: user.uid,
+      avatar: user.photoURL,
       friends: [],
     };
 
-    if (!(await checkUserExists(result.user.email))) {
+    if (!(await checkUserExists(userData.email))) {
       await setUserToCollection(userData);
     }
 
@@ -103,16 +133,14 @@ export const signInWithGoogle = async () => {
   }
 };
 
-export const checkAuth = async (uid: string | null) => {
-  if (!uid) return false;
-  try {
-    const userRef = doc(firestore, 'users', uid);
-    const userSnap = await getDoc(userRef);
-    return userSnap.exists();
-  } catch (error) {
-    console.error('Error checking auth:', error);
-    return false;
-  }
+export const checkAuth = async () => {
+  const auth = getAuth();
+
+  return new Promise((resolve) => {
+    onAuthStateChanged(auth, (user) => {
+      resolve(!!user);
+    });
+  });
 };
 
 export const getUserData = async (uid: string | null | undefined) => {
@@ -124,6 +152,7 @@ export const getUserData = async (uid: string | null | undefined) => {
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
+      window.location.href = '/register';
       throw new Error('User not found.');
     }
 
@@ -134,6 +163,7 @@ export const getUserData = async (uid: string | null | undefined) => {
     throw error;
   }
 };
+
 const createChatId = (userId1: string, userId2: string): string => {
   return [userId1, userId2].sort().join('_');
 };

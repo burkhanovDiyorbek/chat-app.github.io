@@ -9,12 +9,8 @@ interface ChatListProps {
 
 export default function ChatList({ friends, currentUserId, onSelectChat }: ChatListProps) {
   const handleChatClick = async (friendId: string) => {
-    console.log('handleChatClick', friendId);
-
     try {
       const chatId = await createOrGetChat(currentUserId, friendId);
-      console.log('chatId', chatId);
-
       onSelectChat(chatId);
     } catch (error) {
       console.error('Error while selecting chat:', error);
@@ -26,11 +22,8 @@ export default function ChatList({ friends, currentUserId, onSelectChat }: ChatL
       {friends?.map((friend) => (
         <div
           key={friend.uid}
-          className="chat-item bg-red-600 cursor-pointer"
-          onClick={() => {
-            console.log('Clicked on:', friend.uid); // Test xabari qo'shing
-            handleChatClick(friend.uid);
-          }}>   
+          className="chat-item cursor-pointer"
+          onClick={() => handleChatClick(friend.uid)}>
           <ChatListItem avatar={friend.avatar} name={friend.name} />
         </div>
       ))}
